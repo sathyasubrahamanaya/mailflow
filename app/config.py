@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     
     SARVAM_API_KEY: str
     GROQ_API_KEY: str
-    GROQ_MODEL_NAME: str = "your-groq-model-name"
+    GROQ_MODEL_NAME: str = "qwen-qwq-32b"
     
     DATABASE_URL: str = "sqlite+aiosqlite:///./mailflow.db"
     

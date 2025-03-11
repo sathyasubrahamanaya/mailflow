@@ -6,15 +6,15 @@ from app.models import User
 router = APIRouter(prefix="/user", tags=["User"])
 
 @router.post("/transcribe")
-async def transcribe_audio(
+async def transcribe_audio_endpoint(
     file: UploadFile = File(...),
-    model: str = "saarika:v2",
-    language: str = "unknown",
+    model: str = "saaras:flash",
     with_timestamps: bool = False,
     with_diarization: bool = False,
     num_speakers: int = 1,
     current_user: User = Depends(APIKeySecurity())
 ):
+   
     if file.content_type not in ["audio/wav", "audio/mp3"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -25,7 +25,6 @@ async def transcribe_audio(
         transcription_result = await process_transcription(
             file=file,
             model=model,
-            language=language,
             with_timestamps=with_timestamps,
             with_diarization=with_diarization,
             num_speakers=num_speakers

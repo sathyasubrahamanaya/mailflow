@@ -13,18 +13,22 @@ class EmailGenerationAgent:
         self.llm = ChatGroq(model=settings.GROQ_MODEL_NAME)
         
         self.prompt_template = PromptTemplate(
-            input_variables=["transcribed_text", "recipient_name", "recipient_email"],
-            template="""
-            Rephrase the following transcribed text into a professional email:
-            
-            Transcribed Text: "{transcribed_text}"
-            
-            Recipient Name: "{recipient_name}"
-            Recipient Email: "{recipient_email}"
-            
-            Professional Email:
-            """
-        )
+         input_variables=["transcribed_text", "recipient_name", "recipient_email"],
+         template="""
+          Using the transcribed text as the main message, generate a professional email addressed to {recipient_name} at {recipient_email} in the following Gmail format:
+
+          Subject: [A concise subject line reflecting the purpose of the transcribed text]
+
+          Dear [Recipient Name],
+
+          [A polite and professional rephrasing of the transcribed text: "{transcribed_text}"]
+
+          Best regards,
+          [Your Name]
+
+          The output must include only the email content as shown above—subject line, greeting, body, and closing—with no additional text, commentary, or explanations. Rephrase the transcribed text "{transcribed_text}" into a concise, polite, and professional body suitable for an email.
+       """
+      )
         
         self.llm_chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
         
