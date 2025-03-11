@@ -8,7 +8,7 @@ async def transcribe_audio(
     language: str = "unknown",
     with_timestamps: bool = False,
     with_diarization: bool = False,
-    num_speakers: int = 1
+    num_speakers: int = 2
 ):
     SARVAM_API_URL = "https://api.sarvam.ai/v1/speech-to-text"
     SARVAM_API_KEY = settings.SARVAM_API_KEY
