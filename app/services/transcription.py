@@ -4,34 +4,33 @@ from app.config import settings
 
 async def transcribe_audio(
     file: UploadFile,
-    model: str = "saarika:v2",
+    model: str = "saaras:v2",
     language: str = "unknown",
     with_timestamps: bool = False,
     with_diarization: bool = False,
     num_speakers: int = 1
 ):
-    SARVAM_API_URL = "https://api.sarvam.ai/v1/speech-to-text"
+    SARVAM_API_URL = "https://api.sarvam.ai/speech-to-text-translate"
     SARVAM_API_KEY = settings.SARVAM_API_KEY
 
-    if file.content_type not in ["audio/wav", "audio/mp3"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid file type. Only WAV and MP3 are supported."
-        )
+   
     
     file_bytes = await file.read()
-    files = {"audio_file": (file.filename, file_bytes, file.content_type)}
+    
+
+    print("filename--->",file.filename)
+    files = {"file": (file.filename, file_bytes, file.content_type)}
     
     params = {
-        "model": model,
-        "language": language,
-        "with_timestamps": str(with_timestamps).lower(),
+        "body.model": model,
+        "prompt":"",
         "with_diarization": str(with_diarization).lower(),
-        "num_speakers": num_speakers
+        "num_speakers": num_speakers,
     }
     
     headers = {
-        "Authorization": f"Bearer {SARVAM_API_KEY}"
+        "api-subscription-key": f"{SARVAM_API_KEY}",
+        
     }
     
     async with httpx.AsyncClient() as client:
