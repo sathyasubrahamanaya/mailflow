@@ -46,4 +46,5 @@ async def transcribe_audio(
             status_code=response.status_code,
             detail=f"Sarvam API error: {response.text}"
         )
-    return response.json()
+    print(dict(response.json()).get("transcript",None))
+    return dict(response.json()).get("transcript",None)

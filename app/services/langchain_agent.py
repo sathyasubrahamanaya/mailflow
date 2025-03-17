@@ -6,24 +6,17 @@ from duckduckgo_search import DDGS
 from sqlalchemy.future import select
 from app.database import get_session
 from app.models import User, Contact
+from app.services.email_prompt import prompt
+import datetime
 
 class EmailGenerationAgent:
     def __init__(self):
         from app.config import settings
-        self.llm = ChatGroq(model=settings.GROQ_MODEL_NAME)
+        self.llm = ChatGroq(model=settings.GROQ_MODEL_NAME,api_key=settings.GROQ_API_KEY)
         
         self.prompt_template = PromptTemplate(
-            input_variables=["transcribed_text", "recipient_name", "recipient_email"],
-            template="""
-            Rephrase the following transcribed text into a professional email:
-            
-            Transcribed Text: "{transcribed_text}"
-            
-            Recipient Name: "{recipient_name}"
-            Recipient Email: "{recipient_email}"
-            
-            Professional Email:
-            """
+            input_variables=["transcribed_text","recipient_email"],
+            template=prompt
         )
         
         self.llm_chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
@@ -61,9 +54,11 @@ class EmailGenerationAgent:
     def web_search(self, query: str):
         results = DDGS(query, max_results=10, region="in-en", timelimit='d')
         return results
+    def time_now(self):
+        return datetime.datetime.now()
     
-    def generate_email(self, transcribed_text: str, recipient_name: str, recipient_email: str):
-        return self.llm_chain.run({
+    def generate_email(self, transcribed_text: str, recipient_name: str=None, recipient_email: str=None):
+        return self.llm_chain.invoke({
             "transcribed_text": transcribed_text,
             "recipient_name": recipient_name,
             "recipient_email": recipient_email

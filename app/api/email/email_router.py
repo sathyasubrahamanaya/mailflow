@@ -4,6 +4,8 @@ from app.middleware.auth_middleware import APIKeySecurity
 from app.services.langchain_agent import EmailGenerationAgent
 from app.services.transcription import transcribe_audio
 from app.database import get_session
+from app.services.utils import clean_response,remove_escapes,remove_think_sections
+
 
 router = APIRouter(prefix="/email", tags=["Email"])
 
@@ -11,17 +13,28 @@ email_agent = EmailGenerationAgent()
 
 @router.post("/generate")
 async def generate_email_endpoint(
-    transcribed_text: str,
-    recipient_name: str,
-    recipient_email: str,
+    file: UploadFile = File(...),
+    transcribed_text: str|None =Form(default=None),
+    recipient_name: str|None =Form(default=None),
+    recipient_email: str|None =Form(default=None),
     current_user: User = Depends(APIKeySecurity())
 ):
     try:
+        
+        transcribe_audio_content = await transcribe_audio(file)
+        sender_name = current_user.name
+        print("transcribed_audio",transcribe_audio_content)
+        if transcribed_text!=None:
+           
+           transcription_str = transcribed_text  
+        else:
+            transcription_str = str(transcribe_audio_content)
         email_content = email_agent.generate_email(
-            transcribed_text=transcribed_text,
+            transcribed_text=transcription_str+ f"sender's name is {sender_name}",
             recipient_name=recipient_name,
             recipient_email=recipient_email
         )
+        
         return {"email_content": email_content}
     except Exception as e:
         raise HTTPException(
