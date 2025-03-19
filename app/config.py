@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     GROQ_MODEL_NAME: str = "your-groq-model-name"
     
     DATABASE_URL: str = "sqlite+aiosqlite:///./mailflow.db"
+    CHATBASE_URL: str = "./mailflow.db"
     
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

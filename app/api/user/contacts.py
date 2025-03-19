@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Contact, User
 from app.database import get_session
 from app.middleware.auth_middleware import APIKeySecurity
-
+from fastapi.responses import JSONResponse
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
 class ContactCreate(BaseModel):
@@ -13,7 +13,10 @@ class ContactCreate(BaseModel):
     email: str
     phone: str = None
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+class ContactList(BaseModel):
+    contacts:list[Contact]
+
+@router.post("/create", status_code=status.HTTP_201_CREATED)
 async def create_contact(
     contact: ContactCreate,
     current_user: User = Depends(APIKeySecurity()),
@@ -28,15 +31,17 @@ async def create_contact(
     session.add(db_contact)
     await session.commit()
     await session.refresh(db_contact)
-    return db_contact
+    return JSONResponse({"Message":"success","Data":db_contact.model_dump(),"ErrorCode":0})
 
-@router.get("")
+@router.get("/get")
 async def get_contacts(
     current_user: User = Depends(APIKeySecurity()),
     session: AsyncSession = Depends(get_session)
 ):
     result = await session.execute(select(Contact).where(Contact.user_id == current_user.id))
-    return result.scalars().all()
+    contacts:list[Contact]=result.scalars().all()
+    contactlist = ContactList(contacts=contacts)
+    return JSONResponse({"Message":"success","Data":contactlist.model_dump(),"ErrorCode":0})
 
 @router.get("/search")
 async def search_contacts(
@@ -50,4 +55,6 @@ async def search_contacts(
             Contact.name.contains(query) | Contact.email.contains(query)
         )
     )
-    return result.scalars().all()
+    contacts:list[Contact]=result.scalars().all()
+    contactlist = ContactList(contacts=contacts)
+    return JSONResponse({"Message":"success","Data":contactlist.model_dump(),"ErrorCode":0})

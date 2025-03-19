@@ -7,6 +7,11 @@ from app.api.auth.schemas import UserCreate
 from app.database import get_session
 from app.config import settings
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+class LoginCreate(BaseModel):
+    username:str
+    password:str
 
 router = APIRouter()
 
@@ -52,9 +57,10 @@ async def register(user: UserCreate, session=Depends(get_session)):
     await session.refresh(db_user)
     return JSONResponse({"Message":"success","Data":{"user_id":db_user.id},"ErrorCode":0})
 
+
 @router.post("/login")
-async def login(username: str, password: str, session=Depends(get_session)):
-    user = await authenticate_user(session, username, password)
+async def login(credentials:LoginCreate, session=Depends(get_session)):
+    user = await authenticate_user(session, credentials.username, credentials.password)
     if not user:
        return JSONResponse({"Message":"incorrect username or password","Data": {"api_key": user.api_key},"ErrorCode":1})
     else:

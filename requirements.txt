@@ -3,9 +3,9 @@ sqlmodel
 passlib[bcrypt]
 python-jose[cryptography]
 httpx
-langchain
-langchain-groq
 duckduckgo-search
 pydantic-settings
 aiosqlite
-langchain_community
+agno
+groq
+streamlit

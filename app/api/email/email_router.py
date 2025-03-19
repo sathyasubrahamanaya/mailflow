@@ -1,46 +1,49 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, Form, File
 from app.models import User, ChatHistory
 from app.middleware.auth_middleware import APIKeySecurity
-from app.services.langchain_agent import EmailGenerationAgent
+from app.services.agno_agent import generate_email
 from app.services.transcription import transcribe_audio
 from app.database import get_session
 from app.services.utils import clean_response,remove_escapes,remove_think_sections
+import json
+from fastapi.responses import JSONResponse
 
 
 router = APIRouter(prefix="/email", tags=["Email"])
 
-email_agent = EmailGenerationAgent()
+
 
 @router.post("/generate")
 async def generate_email_endpoint(
-    file: UploadFile = File(...),
+    file: UploadFile|None = File(default=None),
     transcribed_text: str|None =Form(default=None),
     recipient_name: str|None =Form(default=None),
     recipient_email: str|None =Form(default=None),
     current_user: User = Depends(APIKeySecurity())
 ):
     try:
-        
-        transcribe_audio_content = await transcribe_audio(file)
-        sender_name = current_user.name
+        transcribe_audio_content=""
+        if file:
+           transcribe_audio_content = await transcribe_audio(file) 
         print("transcribed_audio",transcribe_audio_content)
         if transcribed_text!=None:
            
            transcription_str = transcribed_text  
         else:
             transcription_str = str(transcribe_audio_content)
-        email_content = email_agent.generate_email(
-            transcribed_text=transcription_str+ f"sender's name is {sender_name}",
+        if transcribe_audio_content!=None and transcribed_text!=None:
+            transcription_str = str(transcribe_audio_content) + "**body modification instruction**"+transcribed_text
+
+        email_content= await generate_email(
+            transcribed_text=transcription_str+ f"**sender info** this email sent by is {current_user.name}",
             recipient_name=recipient_name,
-            recipient_email=recipient_email
+            recipient_email=recipient_email,
+            user_session_id=current_user.username + f"__{current_user.id}"
         )
-        
-        return {"email_content": email_content}
+        return JSONResponse({"Message":"success","Data":{"email_content":json.loads(email_content.replace('\n', ''))},"ErrorCode":0 })
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating email: {str(e)}"
-        )
+        return JSONResponse({{"Message":f"Error generating email: {str(e)}","Data":{},"ErrorCode":1 }})
+       
 
 @router.post("/update")
 async def update_email(
@@ -48,7 +51,7 @@ async def update_email(
     recipient_email: str = Form(...),
     conversation_id: int = Form(None),
     input_text: str = Form(None),
-    voice_file: UploadFile = File(None),
+    voice_file: UploadFile|None = File(None),
     current_user: User = Depends(APIKeySecurity()),
     session = Depends(get_session)
 ):
@@ -80,7 +83,7 @@ async def update_email(
     updated_conversation = (conversation_context + "\nUser: " + new_input) if conversation_context else new_input
 
     # Generate the professional email using the updated conversation as context
-    email_content = email_agent.generate_email(
+    email_content = generate_email(
         transcribed_text=updated_conversation,
         recipient_name=recipient_name,
         recipient_email=recipient_email

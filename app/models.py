@@ -30,6 +30,7 @@ class SupportQuery(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     query_text: str
     status: str = "open"
+    reply:str|None 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     user: User = Relationship(back_populates="support_queries")
@@ -37,6 +38,7 @@ class SupportQuery(SQLModel, table=True):
 class Feedback(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    user_name:str
     rating: int
     comment: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
