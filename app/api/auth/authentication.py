@@ -62,7 +62,7 @@ async def register(user: UserCreate, session=Depends(get_session)):
 async def login(credentials:LoginCreate, session=Depends(get_session)):
     user = await authenticate_user(session, credentials.username, credentials.password)
     if not user:
-       return JSONResponse({"Message":"incorrect username or password","Data": {"api_key": user.api_key},"ErrorCode":1})
+       return JSONResponse({"Message":"incorrect username or password","Data": {},"ErrorCode":1})
     else:
       return JSONResponse({"Message":"suceess","Data": {"api_key": user.api_key},"ErrorCode":0})
 
