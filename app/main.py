@@ -8,7 +8,7 @@ from app.api.support.support_router import router as support_router
 from app.api.email.email_router import router as email_router
 from app.api.user.contacts import router as contacts_router
 
-app = FastAPI()
+app = FastAPI(title="MailFlow",version="0.1.0 Abin Alpha version")
 
 # CORS Configuration
 app.add_middleware(
