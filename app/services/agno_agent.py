@@ -47,10 +47,14 @@ class ContactSearchTool(Toolkit):
             result = await session.execute(
                 select(Contact).where(ilike_op(Contact.name,f'%{person_name}%'))
             )
-            contact = result.scalar_one_or_none()
+            contact = result.scalars().all()
+            if isinstance(contact,list):
+               contact = contact[0]
         logger.info(f"running contact tool for {person_name},")
+        if contact:
+           logger.info(f"contact :{contact.email}")
         if isinstance(contact,Contact):
-          return f"the recipient_email_found at contact search is {contact.email}"
+          return f"the very important contact result **recipient_email** at contact search is {contact.email}"
         else:
           return "No contact found with that name."
       else:
@@ -70,8 +74,9 @@ def create_parser_agent(user_session_id:str):
     add_history_to_messages=True,
     num_history_responses=3,
     role ="Email Parser",
-    description="You are a helpful assistant. your job is to construct the email body from a textual description by looking carefully extracting recipient email,subject,body,and recipient name",
+    description="You are a helpful assistant. your job is to construct the email body from a voice transcription by looking carefully extracting recipient email,subject,body,and recipient name",
     instructions="""
+   
     0. You have access to tools:contact_search_tool.always note down the date mentioned, look out for chat history for more context
     1. Always use the current date time  as reference, if the text contains time related words like last week,today,yesterday,day after tomorrow, year later etc,prefer mentioning date in   dd/mm/yyyy format in given in the user input.remove relative timings from message body
     2. Extract the recipient's name from the input text.
@@ -80,6 +85,9 @@ def create_parser_agent(user_session_id:str):
   5. Construct the email body based on the input text.
   5a. after constructing body look for any addtional instruction given in the text for email formulation if yes then modify email body according to it
   5b. if subject is not given make a appropriate subject else use the given subject or None
+  5c.In a given voice transcript **recipient_mail_from_transcription** address or recipient email may be given at the end of voice transcription or not. 
+    later when you are using contact_search_tool you may get **recipient_email_from_search** or not.
+    so first prefer that  **recipient_mail_from_transcription** if it is not None/Null else if you should use **recipient_email_from_search** or as last option you can use null
 
     6. Return the output in JSON format with the following structure:
     {
@@ -95,18 +103,20 @@ def create_parser_agent(user_session_id:str):
 
     
    )
+   
    return email_parer_agent
 
 email_finish_agent = Agent(
     model=Groq(id="llama-3.3-70b-versatile"),
     role ="Email Finisher",
-    description="You are a helpful assistant. your job is to construct the email body from a textual description by looking carefully extracting recipient email,subject,body,and recipient name",
+    description="You are a helpful assistant. your job is to construct the email body from a textual description by looking carefully extracting recipient email,subject,body,and recipient name.",
     instructions=""" 
     1. Always use the current date time  as reference, if the text contains time related words like last week,today,yesterday,day after tomorrow, year later etc,prefer mentioning date in   dd/mm/yyyy format in given in the user input.remove relative timings from message body
     2. Extract the recipient's name from the input text.
     3. Extract the subject of the email from the input text.
     4. Construct and rephrase the email body based on the input text professionally,add spaces and newlines if necessary add best regards using sender's name with proper and professional ending.
     5. Return the output in JSON format with the following structure:
+    
     {
         "recipient_name": [recipient_name or null],
         "recipient_email": [recipient_email or null],
@@ -122,7 +132,9 @@ email_finish_agent = Agent(
 
 async def generate_email(transcribed_text:str,recipient_name=None,recipient_email=None,user_session_id:str="default"):
         email_parser_agent = create_parser_agent(user_session_id)
-        agent1_message_coroutine =await email_parser_agent.arun(transcribed_text+f'todays date and time  is {datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")} + the recipient_mail is {recipient_email}, the recipient_name is {recipient_name}')
+        agent1_message_coroutine =await email_parser_agent.arun(transcribed_text+f'todays date and time  is {datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")} + the **recipient_mail_from_transcription** is {recipient_email}, the recipient_name is {recipient_name}')
         agent1_message = agent1_message_coroutine.messages[-1].content
+        logger.info(f"constructed_base{agent1_message}")
         agent2_message = email_finish_agent.run(agent1_message).messages[-1].content
+        logger.info(f"constructed_finisher {agent2_message}")
         return agent2_message

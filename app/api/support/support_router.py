@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.future import select
+
+from sqlmodel import select
 from app.models import SupportQuery, Feedback, User
 from app.database import get_session
 from app.middleware.auth_middleware import APIKeySecurity
@@ -33,7 +34,8 @@ class SupportQueryResponse(BaseModel):
     user_id: int
     query_text: str
     status: str
-    reply:str|None 
+    reply:str|None
+    reply_time:str|None =None
 
 class AllQueries(BaseModel):
     queries:list[SupportQueryResponse]
@@ -64,7 +66,8 @@ async def get_all_queries(
     result = await session.execute(statement)
     queries:list[SupportQuery] = result.scalars().all()
     if len(queries)>0:
-        all_queries = [SupportQueryResponse(id=query.id,user_id=query.user_id,query_text=query.query_text,status = query.status,reply=query.reply) for query in queries]
+        queries.reverse()
+        all_queries = [SupportQueryResponse(id=query.id,user_id=query.user_id,query_text=query.query_text,status = query.status,reply=query.reply,reply_time=datetime.strftime(query.created_at,format= "%#d %b %I:%M%p")) for query in queries]
         print("queries-->",all_queries)
         return JSONResponse({"Message": "success", "Data":AllQueries(queries=all_queries).model_dump(),"ErrorCode":0})
     else:
@@ -84,6 +87,7 @@ async def reply_query(
     if query and current_user.is_admin:
         query.reply = query_request.reply
         query.status="closed"
+        query.created_at = datetime.now()
         session.add(query)
         await session.commit()
         await session.refresh(query)
