@@ -195,14 +195,20 @@ elif page == "Email Composer":
                 # Ensure URL parameters are strings before encoding.
                 subject = str(email_content.get("subject", ""))
                 body = str(email_content.get("body", ""))
-                recipient_email_str = str(recipient_email)
+                if email_content.get("recipient_email",None):
+                    recipient_email_str = email_content.get("recipient_email",None)
+                else:
+                    recipient_email_str = str(recipient_email)
+                
+
+                
                 
                 gmail_url = (
                     "https://mail.google.com/mail/?view=cm&fs=1"
                     f"&to={urllib.parse.quote(recipient_email_str)}"
                     f"&su={urllib.parse.quote(subject)}"
                     f"&body={urllib.parse.quote(body)}"
-                    "&bcc=someone.else@example.com"
+                    
                 )
                 st.markdown(f"[Send via Gmail]({gmail_url})", unsafe_allow_html=True)
                 

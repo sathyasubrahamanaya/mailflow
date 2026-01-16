@@ -36,6 +36,7 @@ async def generate_email_endpoint(
             transcription_str = str(transcribe_audio_content)
         if transcribe_audio_content!=None and transcribed_text!=None:
             transcription_str = str(transcribe_audio_content) + "**body modification instruction**"+transcribed_text
+        
 
         email_content= await generate_email(
             transcribed_text=transcription_str+ f"**sender info** this email sent by is {current_user.name}",
@@ -43,7 +44,17 @@ async def generate_email_endpoint(
             recipient_email=recipient_email,
             user_session_id=current_user.username + f"__{current_user.id}"
         )
-        return JSONResponse({"Message":"success","Data":{"email_content":json.loads(email_content.replace('\n', ''))},"ErrorCode":0 })
+
+        # With agno v2 output_schema, email_content is a Pydantic Email object
+        # Convert to dict for JSON response
+        if hasattr(email_content, 'model_dump'):
+            email_dict = email_content.model_dump()
+        else:
+            # Fallback for string responses  
+            email_dict = json.loads(email_content.replace('\n', ''))
+        
+        return JSONResponse({"Message":"success","Data":{"email_content":email_dict},"ErrorCode":0 })
     except Exception as e:
+        print("error generating email",e)
         return JSONResponse({"Message":f"Error generating email: {str(e)}","Data":{},"ErrorCode":1 })
        

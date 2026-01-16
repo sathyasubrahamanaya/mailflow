@@ -1,5 +1,5 @@
 import re
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 def generate_email(text: str) -> dict:
     subject = "Email Generated from Voice Input"
     body = f"""

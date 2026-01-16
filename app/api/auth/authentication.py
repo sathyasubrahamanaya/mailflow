@@ -15,7 +15,10 @@ class LoginCreate(BaseModel):
 
 router = APIRouter()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use bcrypt_sha256 instead of plain bcrypt
+# This pre-hashes passwords with SHA256 before bcrypt, eliminating the 72-byte limit
+# and fixing compatibility issues with newer bcrypt versions
+pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
