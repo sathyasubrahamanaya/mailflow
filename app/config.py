@@ -6,12 +6,12 @@ class Settings(BaseSettings):
     
     SARVAM_API_KEY: str
     GROQ_API_KEY: str
-    GROQ_MODEL_NAME: str = "your-groq-model-name"
+    GROQ_MODEL_NAME: str = "qwen-qwq-32b"
     
     DATABASE_URL: str = "sqlite+aiosqlite:///./mailflow.db"
     CHATBASE_URL: str = "./mailflow.db"
     
-    SECRET_KEY: str
+    SECRET_KEY: str="abcd1234xef123sd"
     ALGORITHM: str = "HS256"
     
     CORS_ORIGINS: list[str] = ["*"]
