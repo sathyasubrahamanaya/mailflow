@@ -3,7 +3,6 @@ from agno.models.groq import Groq
 from agno.tools import Toolkit
 from datetime import datetime
 from agno.utils.log import logger
-import re
 from difflib import get_close_matches
 from pydantic import BaseModel, Field
 from sqlmodel import select
@@ -18,7 +17,6 @@ from app.config import settings
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.groq import Groq
-import json
 os.environ["GROQ_API_KEY"] = settings.GROQ_API_KEY
 class Email(BaseModel):
     recipient_email: str|None = Field(..., description="Recipient's email address")
@@ -46,7 +44,7 @@ class ContactSearchTool(Toolkit):
         async for session in get_session():
             # First try exact/partial match (case-insensitive)
             result = await session.execute(
-                select(Contact).where(ilike_op(Contact.name,f'%{person_name}%'))
+                select(Contact).where(ilike_op(Contact.name,f'%{person_name}%')) # type: ignore
             )
             contacts = result.scalars().all()
             
@@ -70,13 +68,13 @@ class ContactSearchTool(Toolkit):
                         matched_index = all_names_lower.index(close_names_lower[0])
                         found_name = all_names[matched_index]
                         contacts = [c for c in all_contacts if c.name == found_name]
-                        logger.info(f"Fuzzy matched '{person_name}' to '{found_name}' (case-insensitive)")
+                        logger.info(f"Fuzzy matched '{person_name}' to '{found_name}' (case-insensitive)") # type: ignore
             
             contact = contacts[0] if contacts and len(contacts) > 0 else None
             
-        logger.info(f"running contact tool for {person_name},")
-        if contact:
-           logger.info(f"contact :{contact.email}")
+        logger.info(f"running contact tool for {person_name},") # type: ignore
+        if contact: # type: ignore
+           logger.info(f"contact :{contact.email}") # type: ignore
         if isinstance(contact,Contact):
           return f"the very important contact result **recipient_email** at contact search is {contact.email}"
         else:

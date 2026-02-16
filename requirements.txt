@@ -1,6 +1,7 @@
 fastapi[standard]
 sqlmodel
 passlib[bcrypt]
+bcrypt==4.0.1
 python-jose[cryptography]
 httpx
 duckduckgo-search
@@ -9,3 +10,6 @@ aiosqlite
 agno
 groq
 streamlit
+langchain
+langchain_community
+qdrant-client[fastembed]>=1.10.0

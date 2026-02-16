@@ -1,5 +1,5 @@
 import httpx
-from fastapi import HTTPException, status, UploadFile
+from fastapi import HTTPException
 from app.config import settings
 import io
 import requests
@@ -7,7 +7,7 @@ def transcribe_audio(
     file_bytes: bytes,
     file_name:str,
     file_content_type:str,
-    model: str = "saaras:v2",
+    model: str = "saaras:v2.5",
     language: str = "unknown",
     with_timestamps: bool = False,
     with_diarization: bool = False,

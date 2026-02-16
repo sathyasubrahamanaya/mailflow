@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.future import select
 from app.models import User, AdminUser
 from app.database import get_session
-from app.middleware.auth_middleware import APIKeySecurity
+from app.middleware.auth_middleware import get_current_user
 from fastapi.responses import JSONResponse
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -13,8 +13,8 @@ class AdminCreate(BaseModel):
 @router.post("/admins", status_code=status.HTTP_201_CREATED)
 async def create_admin(
     admin_data: AdminCreate,
-    current_user: User = Depends(APIKeySecurity()),
-    session=Depends(get_session)
+    current_user: User = Depends(get_current_user),
+    session=Depends(get_session)#type: ignore
 ):
     if current_user.is_admin:
         return JSONResponse({"Message":"you are already admin","Data":{},"ErrorCode":1})
@@ -23,7 +23,7 @@ async def create_admin(
          return JSONResponse({"Message":"user not found","Data":{},"ErrorCode":1})
     
     admin = AdminUser(user_id=user.id)
-    statement = select(User).where(User.id == admin_data.user_id)
+    statement = select(User).where(User.id == admin_data.user_id) # type: ignore
     results = await session.execute(statement)
     current_user_from_db:User = results.scalars().first()
     print("current___user",current_user_from_db)
@@ -41,8 +41,8 @@ async def create_admin(
     return JSONResponse({"Message":"Admin added","Data":admin.model_dump(),"ErrorCode":0})
 @router.get("/users")
 async def get_all_users(
-    current_user: User = Depends(APIKeySecurity()),
-    session=Depends(get_session)
+    current_user: User = Depends(get_current_user),
+    session=Depends(get_session) #type: ignore
 ):
     if not current_user.is_admin:
         raise HTTPException(

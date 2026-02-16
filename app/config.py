@@ -4,8 +4,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "MailFlow Application"
     APP_VERSION: str = "0.1.0"
     
-    SARVAM_API_KEY: str = "sk_wdvjyl40_bmgncR5HIn5tPB78IYffWxCC"
-    GROQ_API_KEY: str ="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"
+    SARVAM_API_KEY: str ="sk_xlgev2iz_cVvZU7VJtfHKig03unrahZW1"
+    GROQ_API_KEY: str ="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"
     GROQ_MODEL_NAME: str = "moonshotai/kimi-k2-instruct-0905"
     
     DATABASE_URL: str = "sqlite+aiosqlite:///./mailflow.db"

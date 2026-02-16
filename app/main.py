@@ -7,21 +7,31 @@ from app.api.user.mail_router import router as user_router
 from app.api.support.support_router import router as support_router
 from app.api.email.email_router import router as email_router
 from app.api.user.contacts import router as contacts_router
+from app.services.vector_service import vector_db
+from app.api.drafts.drafts_router import router as drafts_router
+from app.api.notes.notes_router import router as notes_router
 
-app = FastAPI(title="MailFlow",version="0.1.0 Abin Alpha version")
+app = FastAPI(title="MailFlow",version="0.2.0 Aditya Beta version")
 
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",  # SvelteKit dev server
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "https://superb-hound-discrete.ngrok-free.app",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
+@app.on_event("startup") # type: ignore
 async def startup():
     await create_db_and_tables()
+    await vector_db.init_collections()
 
 # Include routers
 app.include_router(auth_router)
@@ -30,6 +40,8 @@ app.include_router(user_router)
 app.include_router(support_router)
 app.include_router(email_router)
 app.include_router(contacts_router)
+app.include_router(drafts_router)
+app.include_router(notes_router)
 
 @app.get("/health")
 async def health_check():

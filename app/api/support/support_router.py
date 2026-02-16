@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
 from sqlmodel import select
 from app.models import SupportQuery, Feedback, User
 from app.database import get_session
-from app.middleware.auth_middleware import APIKeySecurity
+from app.middleware.auth_middleware import get_current_user
 from fastapi.responses import JSONResponse
 from datetime import datetime
 
@@ -43,10 +43,10 @@ class AllQueries(BaseModel):
 @router.post("/queries/create", status_code=status.HTTP_201_CREATED)
 async def create_support_query(
     query: SupportQueryCreate,
-    current_user: User = Depends(APIKeySecurity()),
-    session=Depends(get_session)
+    current_user: User = Depends(get_current_user),
+    session=Depends(get_session) # type: ignore
 ):
-    new_query = SupportQuery(
+    new_query = SupportQuery(  # type: ignore
         user_id=current_user.id,
         query_text=query.query_text
     )
@@ -57,8 +57,8 @@ async def create_support_query(
 
 @router.post("/queries/get")
 async def get_all_queries(
-    current_user:User= Depends(APIKeySecurity()),
-    session=Depends(get_session)):
+    current_user:User= Depends(get_current_user),
+    session=Depends(get_session)): # type: ignore
     if current_user.is_admin:
         statement = select(SupportQuery)
     else:
@@ -67,7 +67,7 @@ async def get_all_queries(
     queries:list[SupportQuery] = result.scalars().all()
     if len(queries)>0:
         queries.reverse()
-        all_queries = [SupportQueryResponse(id=query.id,user_id=query.user_id,query_text=query.query_text,status = query.status,reply=query.reply,reply_time=datetime.strftime(query.created_at,format= "%#d %b %I:%M%p")) for query in queries]
+        all_queries = [SupportQueryResponse(id=query.id,user_id=query.user_id,query_text=query.query_text,status = query.status,reply=query.reply,reply_time=datetime.strftime(query.created_at,format= "%#d %b %I:%M%p")) for query in queries]  # type: ignore
         print("queries-->",all_queries)
         return JSONResponse({"Message": "success", "Data":AllQueries(queries=all_queries).model_dump(),"ErrorCode":0})
     else:
@@ -78,8 +78,8 @@ async def get_all_queries(
 @router.post("/queries/reply")
 async def reply_query(
     query_request:QueryReply,
-    current_user:User= Depends(APIKeySecurity()),
-    session=Depends(get_session)):
+    current_user:User= Depends(get_current_user),
+    session=Depends(get_session)):  # type: ignore
 
     query_stmt = select(SupportQuery).where(SupportQuery.id == query_request.query_id)
     query_result = await session.execute(query_stmt)
@@ -99,11 +99,11 @@ async def reply_query(
 @router.post("/feedback", status_code=status.HTTP_201_CREATED)
 async def create_feedback(
     feedback: FeedbackCreate,
-    current_user: User = Depends(APIKeySecurity()),
-    session=Depends(get_session)
+    current_user: User = Depends(get_current_user),
+    session=Depends(get_session)  # type: ignore
 ):
     new_feedback = Feedback(
-        user_id=current_user.id,
+        user_id=current_user.id,  # type: ignore
         user_name= current_user.name,
         rating=feedback.rating,
         comment=feedback.comment
@@ -116,8 +116,8 @@ async def create_feedback(
 
 @router.post("/feedback/get_all")
 async def get_all_feedback(
-    current_user: User = Depends(APIKeySecurity()),
-    session=Depends(get_session)
+    current_user: User = Depends(get_current_user),
+    session=Depends(get_session)  # type: ignore
 ):
     statement = select(Feedback)
     result = await session.execute(statement)
